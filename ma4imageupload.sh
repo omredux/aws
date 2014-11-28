@@ -9,10 +9,10 @@ if [ $# != 5 ]
 else
 #use the aws.amazon.com/cli reference EXTENSIVELY for this - you won't find it via google - hunker down
 #Step 1: Create a VPC with a /28 cidr block (see the aws example) - assign the vpc-id to a variable  you can awk column $6 on the --output=text to get the value
-vpcid=`aws ec2 create-vpc --cidr-block 10.0.0.0/28 --output=text|awk {'print $6'}`
+vpcid=`aws ec2 create-vpc --cidr-block 10.0.0.0/24 --output=text|awk {'print $6'}`
 
 #Step 2: Create a subnet for the VPC - use the same /28 cidr block that you used in step 1.  Save the subnet-id to a variable (retrieve it by awk column 6)
-subnetid=`aws ec2 create-subnet --vpc-id $vpcid --cidr-block 10.0.0.0/28 --output=text|awk {'print $6'}`
+subnetid=`aws ec2 create-subnet --vpc-id $vpcid --cidr-block 10.0.0.0/25 --output=text|awk {'print $6'}`
 
 #Step 3: Create a custom security group per this VPC - store the group ID in a variable (awk $jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj1)
 secgroupid=`aws ec2 create-security-group --group-name ito444  --description "Security group for this classes test script" --vpc-id $vpcid --output=text|awk {'print $1'}`
