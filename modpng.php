@@ -108,6 +108,7 @@ use Aws\S3\S3Client;
 $client = S3Client::factory();
 
 $bucket = uniqid("ma5image-uploader1234", true);
+
 echo "Creating bucket named {$bucket}\n";
 $result = $client->createBucket(array(
     'Bucket' => $bucket
@@ -122,10 +123,10 @@ $client->waitUntilBucketExists(array('Bucket' => $bucket));
 echo "Creating a new object with key";
 
 $result = $client->putObject(array(
-    'Bucket'     => $bucket,
-    'Key'        => 'imageupload',
-    'SourceFile' => 'tmp/g5.png',
-    
+	'ACL' => 'public-read',
+	'Bucket' => $bucket,
+	'Key' => 'imageupload',
+	'SourceFile' => 'tmp/g5.png'  
 ));
 
 // We can poll the object until it is accessible
@@ -137,7 +138,7 @@ $client->waitUntil('ObjectExists', array(
 // get s3finishedurl
 
 $s3finishedurl = $result['ObjectURL'];
-
+echo $s3finishedurl; 
 //update values in database
 
 $status = 1;
