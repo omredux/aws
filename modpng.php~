@@ -65,7 +65,7 @@ $result = $client->receiveMessage(array(
 $messageBody = "";
 $receiptHandle = "";
 $rawsqsurl = "";
-//get queue messages
+//get queue messages and row ID
 
 foreach ($result->getPath('Messages/*/Body') as $messageBody) {
 	$sql = "SELECT s3rawurl FROM items WHERE id = $messageBody";
@@ -75,68 +75,88 @@ foreach ($result->getPath('Messages/*/Body') as $messageBody) {
 		echo $rawsqsurl[0];
 	}
 
-    //echo $messageBody;
+    
 }
 
+//get reciepthandle
+
+foreach ($result->getPath('Messages/*/ReceiptHandle') as $receiptHandle) {}
 
 
-
-
+//modify image 
 
 header('Content-Type: image/png');
 
-$img = LoadPng("https://php-jrh-547d759e72042.s3.amazonaws.com/tmp/Setting-icon.png");
+$img = LoadPng("$rawsqsurl");
 
 imagepng($img,"/tmp/g5.png");
 //imagedestroy($img);
 
-delete queue message
+//delete queue message with queueurl and reciepthandle
 
 $result = $client->deleteMessage(array(
     // QueueUrl is required
-    'QueueUrl' => 'string',
+    'QueueUrl' => 'https://sqs.us-east-1.amazonaws.com/666198007909/ma5queue',
     // ReceiptHandle is required
-    'ReceiptHandle' => 'string',
+    'ReceiptHandle' => $receiptHandle,
 ));
 
-s3
+//upload file to new bucket 
 
 use Aws\S3\S3Client;
 
-$client = S3Client::factory(array(
-    'profile' => '<profile in your aws credentials file>'
+$client = S3Client::factory();
+
+$bucket = uniqid("ma5image-uploader1234", true);
+echo "Creating bucket named {$bucket}\n";
+$result = $client->createBucket(array(
+    'Bucket' => $bucket
 ));
 
+$client->waitUntilBucketExists(array('Bucket' => $bucket));
 
-create bucket
-
-$client->createBucket(array('Bucket' => 'mybucket'));
-
-
-upload file to bucket
 
 // Upload an object by streaming the contents of a file
 // $pathToFile should be absolute path to a file on disk
+
+echo "Creating a new object with key";
+
 $result = $client->putObject(array(
     'Bucket'     => $bucket,
-    'Key'        => 'data_from_file.txt',
-    'SourceFile' => $pathToFile,
-    'Metadata'   => array(
-        'Foo' => 'abc',
-        'Baz' => '123'
-    )
+    'Key'        => 'imageupload',
+    'SourceFile' => 'tmp/g5.png',
+    
 ));
 
-SNS
+// We can poll the object until it is accessible
+$client->waitUntil('ObjectExists', array(
+    'Bucket' => $bucket,
+    'Key'    => 'imageupload'
+));
+
+// get s3finishedurl
+
+$s3finishedurl = $result['ObjectURL'];
+
+//update values in database
+
+$status = 1;
+
+$query = "UPDATE items SET status=?, s3finishedurl WHERE id=?";
+$statement = $mysqli->prepare($query);
+
+//bind parameters for markers, where (s = string, i = integer, d = double,  b = blob)
+$results =  $statement->bind_param('isi', $status, $s3finishedurl, $messageBody );
+
+//notify user with SNS 
 
 use Aws\Sns\SnsClient;
 
 $client = SnsClient::factory(array(
-    'profile' => '<profile in your aws credentials file>',
-    'region'  => '<region name>'
+    'region'  => 'us-east-1'
 ));
 
-publish massage 
+//publish message 
 
 $result = $client->publish(array(
     'TopicArn' => 'string',
@@ -145,16 +165,7 @@ $result = $client->publish(array(
     'Message' => 'string',
     'Subject' => 'string',
     'MessageStructure' => 'string',
-    'MessageAttributes' => array(
-        // Associative array of custom 'String' key names
-        'String' => array(
-            // DataType is required
-            'DataType' => 'string',
-            'StringValue' => 'string',
-            'BinaryValue' => 'string',
-        ),
-        // ... repeated
-    ),
+    
 ));
 
 ?>

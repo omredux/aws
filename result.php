@@ -154,11 +154,25 @@ if ($snscheck == 0){
 	echo "results updated";
 	
 } else {
-	echo "Already subscribed";}
+	echo "Already subscribed";
+
+	// Create variable to set issubscribed value to 1 
+	
+	$issubscribed = 1;
+
+	$query = "UPDATE items SET issubscribed=? WHERE id=?";
+	$statement = $mysqli->prepare($query);
+
+	//bind parameters for markers, where (s = string, i = integer, d = double,  b = blob)
+	$results =  $statement->bind_param('ii', $issubscribed, $id);
+
+}
 
 //adding ID to queue. First getting max ID from sql statement and then putting ID in queue
 
 echo "adding id to queue"
+
+$currentid = "";
 
 $sql = "SELECT MAX(id) AS id FROM items";
 if ($res1 = mysqli_query($link, $sql)) {
