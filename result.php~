@@ -113,7 +113,7 @@ $client = SnsClient::factory(array(
 ));
 
 $sql = "SELECT issubscribed FROM items WHERE phone = \"$phone\"";
-$snscheck = "";
+
 if ($res0 = mysqli_query($link, $sql)) {
 	$row = mysqli_fetch_row($res0);
 	$snscheck = $row[0];
