@@ -10,12 +10,12 @@ VPCID=(`aws ec2 create-vpc --cidr-block 10.0.0.0/24 --output=text | awk {'print 
     
     
 ##Step 2:
-SUBNETID=(`aws ec2 create-subnet --vpc-id $VPCID --cidr-block 10.0.0.0/25 --availability-zone us-east-1a --output=text | awk {'print $6'}`); echo $SUBNETID 
+SUBNETID=(`aws ec2 create-subnet --vpc-id $VPCID --cidr-block 10.0.0.0/25 --availability-zone us-east-1b --output=text | awk {'print $6'}`); echo $SUBNETID 
 # second subnet for RDS group
-SUBNETID2=(`aws ec2 create-subnet --vpc-id $VPCID --cidr-block 10.0.0.128/25 --availability-zone us-east-1c --output=text`)
+SUBNETID2=(`aws ec2 create-subnet --vpc-id $VPCID --cidr-block 10.0.0.128/25 --availability-zone us-east-1c --output=text | awk {'print $6'}`); echo $SUBNETID2
 
 #Create Database Subnet group -- requires two AZs
-DBSUBNETID=(`create-db-subnet-group --db-subnet-group-name backend --db-subnet-description "Ma5FinalProject" --subnet-ids $SUBNETID,$SUBNETID2`)
+DBSUBNETID=(`aws rds create-db-subnet-group --db-subnet-group-name Ma5FinalProjectBackend --db-subnet-group-description "Ma5FinalProject" --db-subnet-list $SUBNETID,$SUBNETID2`)
 
 
 
@@ -93,7 +93,7 @@ echo -e "\nWaiting an additional 3 minutes (180 second) - before opening the ELB
 for i in {0..180}; do echo -ne '.'; sleep 1;done
 
 #Step ll (create database):
-aws rds create-db-instance --db-name ma5ImageStore --db-instance-identifier ma5FinalProject --allocated-storage 10 --db-instance-class db.t1.micro --engine MySQL --master-username dkuser --master-user-password sWaJama3ha5AdR --output=text 
+aws rds create-db-instance --db-name ma5ImageStore --db-instance-identifier ma5FinalProject --allocated-storage 10 --db-instance-class db.t1.micro --engine MySQL --master-username dkuser --master-user-password sWaJama3ha5AdR --db-subnet-group-name $DBSUBNETID --output=text 
 
 #Step 12 (create SES queue):
 aws sqs create-queue --queue-name ma5queue --output=text
