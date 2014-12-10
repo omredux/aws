@@ -134,26 +134,35 @@ if ($snscheck == 0){
 	
 	//* Update database field issubscribed to 1 to indicate that user is already subscribed
 	
-	$sql = "SELECT id FROM items WHERE phone = \"$phone\"";
+	$sql = "SELECT MAX(id) AS id FROM items";
 
 	if ($res1 = mysqli_query($link, $sql)) {
 		$row = mysqli_fetch_row($res1);
 		$id = $row[0];
+		echo "$id test id";
 	}
 	
 	// Create variable to set issubscribed value to 1 
 	
-	
-	$results = $link->query("UPDATE items SET issubscribed=1 WHERE ID=$id");
-	echo $results;	
+	$sql="UPDATE items SET issubscribed=1 WHERE ID=$id";                     
+        mysqli_query($link,$sql);
+	echo $id;
 	echo "results updated";
 	
 } else {
 	echo "Already subscribed";
+	 $sql = "SELECT MAX(id) AS id FROM items";
 
+        if ($res1 = mysqli_query($link, $sql)) {
+                $row = mysqli_fetch_row($res1);
+                $id = $row[0];
+                echo "$id test id";
+        }
+	
 	// Create variable to set issubscribed value to 1 
-	 $results = $link->query("UPDATE items SET issubscribed=1 WHERE ID=$id");	
-	echo $results;
+	$sql="UPDATE items SET issubscribed=1 WHERE ID=$id";
+	mysqli_query($link,$sql);
+	echo $id;	
 	echo "results updated yup";
 }
 
@@ -168,13 +177,16 @@ if ($res1 = mysqli_query($link, $sql)) {
 	$row = mysqli_fetch_row($res1);
 	$currentid = $row[0];}
 
+use Aws\Sqs\SqsClient;
+
 $client = SqsClient::factory(array(
-'region'  => 'us-east-1'
+    'region'  => 'us-east-1'
 ));
+
 
 $client->sendMessage(array(
     'QueueUrl'    => 'https://sqs.us-east-1.amazonaws.com/666198007909/ma5queue',
-    'MessageBody' => $currentid
+    'MessageBody' => $currentid,
 ));
 
 

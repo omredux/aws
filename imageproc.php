@@ -1,5 +1,4 @@
 <?php
-
 function LoadPng($imgname)
 {
     /* Attempt to open */
@@ -22,9 +21,15 @@ function LoadPng($imgname)
     return $im;
 }
 
-
 require 'vendor/autoload.php';
 use Aws\Rds\RdsClient;
+use Aws\Sqs\SqsClient;
+use Aws\S3\S3Client;
+use Aws\Sns\SnsClient;
+
+
+while(1) {
+
 $client = RdsClient::factory(array(
 'region'  => 'us-east-1'
 ));
@@ -50,7 +55,6 @@ if (mysqli_connect_errno()) {
 }
 
 
-use Aws\Sqs\SqsClient;
 
 $client = SqsClient::factory(array(
     'region'  => 'us-east-1'
@@ -59,9 +63,10 @@ $client = SqsClient::factory(array(
 
 $result = $client->receiveMessage(array(
 	'QueueUrl' => 'https://sqs.us-east-1.amazonaws.com/666198007909/ma5queue',
-	'MaxNumberOfMessages' => 1,	
-));
+ 	'MaxNumberOfMessages' => 1,
+	'VisibilityTimeout' => 30,
 
+));
 $messageBody = "";
 $receiptHandle = "";
 $rawsqsurl = "";
@@ -77,26 +82,29 @@ foreach ($result->getPath('Messages/*/Body') as $messageBody) {
 
     
 }
+if(!empty($messageBody)){
+
 
 //get reciepthandle
 
-foreach ($result->getPath('Messages/*/ReceiptHandle') as $receiptHandle) {
-	echo "test";
-}
+
+	foreach ($result->getPath('Messages/*/ReceiptHandle') as $receiptHandle) {
+		echo "test";
+	}
 
 
-//modify image 
+	//modify image 
 
-header('Content-Type: image/png');
+	header('Content-Type: image/png');
 
-$img = LoadPng("$rawsqsurl[0]");
-echo "12345 $rawsqsurl[0]";
-imagepng($img,"/tmp/g5.png");
-//imagedestroy($img);
+	$img = LoadPng("$rawsqsurl[0]");
+	echo "12345 $rawsqsurl[0]";
+	imagepng($img,"/tmp/g5.png");
+	//imagedestroy($img);
 
-//delete queue message with queueurl and reciepthandle
+	//delete queue message with queueurl and reciepthandle
 
-$result = $client->deleteMessage(array(
+	$result = $client->deleteMessage(array(
     // QueueUrl is required
     'QueueUrl' => 'https://sqs.us-east-1.amazonaws.com/666198007909/ma5queue',
     // ReceiptHandle is required
@@ -105,7 +113,6 @@ $result = $client->deleteMessage(array(
 
 //upload file to new bucket 
 
-use Aws\S3\S3Client;
 
 
 $client = S3Client::factory();
@@ -142,7 +149,6 @@ echo "finished url";
 $results = $link->query("UPDATE items SET status=1,s3finishedurl=\"$s3finishedurl\" WHERE ID=$messageBody");
 
 
-use Aws\Sns\SnsClient;
 
 $client = SnsClient::factory(array(
     'region'  => 'us-east-1'
@@ -155,5 +161,9 @@ $result = $client->publish(array(
     // Message is required
     'Message' => "Processed image is available at $s3finishedurl"
 ));
+}
+
+sleep(60);
+}
 
 ?>
