@@ -119,7 +119,7 @@ if ($res0 = mysqli_query($link, $sql)) {
 	$snscheck = $row[0];
 }
 
-
+$id="";
 
 if ($snscheck == 0){
 	echo "Subscribing you to recieve notification";
@@ -143,34 +143,23 @@ if ($snscheck == 0){
 	
 	// Create variable to set issubscribed value to 1 
 	
-	$issubscribed = 1;
-
-	$query = "UPDATE items SET issubscribed=? WHERE id=?";
-	$statement = $mysqli->prepare($query);
-
-	//bind parameters for markers, where (s = string, i = integer, d = double,  b = blob)
-	$results =  $statement->bind_param('ii', $issubscribed, $id);
 	
+	$results = $link->query("UPDATE items SET issubscribed=1 WHERE ID=$id");
+	echo $results;	
 	echo "results updated";
 	
 } else {
 	echo "Already subscribed";
 
 	// Create variable to set issubscribed value to 1 
-	
-	$issubscribed = 1;
-
-	$query = "UPDATE items SET issubscribed=? WHERE id=?";
-	$statement = $mysqli->prepare($query);
-
-	//bind parameters for markers, where (s = string, i = integer, d = double,  b = blob)
-	$results =  $statement->bind_param('ii', $issubscribed, $id);
-
+	 $results = $link->query("UPDATE items SET issubscribed=1 WHERE ID=$id");	
+	echo $results;
+	echo "results updated yup";
 }
 
 //adding ID to queue. First getting max ID from sql statement and then putting ID in queue
 
-echo "adding id to queue"
+echo "adding id to queue";
 
 $currentid = "";
 
@@ -185,7 +174,7 @@ $client = SqsClient::factory(array(
 
 $client->sendMessage(array(
     'QueueUrl'    => 'https://sqs.us-east-1.amazonaws.com/666198007909/ma5queue',
-    'MessageBody' => '$currentid',
+    'MessageBody' => $currentid
 ));
 
 

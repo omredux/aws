@@ -134,18 +134,13 @@ $result = $client->putObject(array(
 // get s3finishedurl
 
 $s3finishedurl = $result['ObjectURL'];
-echo $s3finishedurl; 
+echo $s3finishedurl;
+echo "finished url"; 
 //update values in database
 
-$status = 1;
 
-$query = "UPDATE items SET status=?, s3finishedurl=? WHERE id=?";
-$statement = $link->prepare($query);
+$results = $link->query("UPDATE items SET status=1,s3finishedurl=\"$s3finishedurl\" WHERE ID=$messageBody");
 
-//bind parameters for markers, where (s = string, i = integer, d = double,  b = blob)
-$results =  $statement->bind_param('isi', $status, $s3finishedurl, $messageBody );
-
-//notify user with SNS 
 
 use Aws\Sns\SnsClient;
 
