@@ -7,11 +7,11 @@ sudo service apache2 restart
 
 curl -sS https://getcomposer.org/installer | php
 
-wget http://ec2-54-174-207-33.compute-1.amazonaws.com/composer.json
+wget ec2-54-174-207-33.compute-1.amazonaws.com/composer.json
 
 sudo php composer.phar install
 
-wget http://ec2-54-174-207-33.compute-1.amazonaws.com/imageproc.php
+wget ec2-54-174-207-33.compute-1.amazonaws.com/imageproc.php
 
 
 sudo mv composer.phar /var/www/html
